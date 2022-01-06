@@ -21,7 +21,6 @@ function App() {
     useEffect(() => {
         setIsListening(false)
         setDialect(dialects[0])
-        console.log(dialects)
         setDialectsVisible(dialects.length > 1)
         // eslint-disable-next-line
     }, [dialects])
