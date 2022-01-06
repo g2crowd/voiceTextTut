@@ -1,57 +1,37 @@
-import React, { useState, useEffect } from 'react'
+import React, {useEffect, useState} from 'react'
 import './App.css'
+import {useSpeechApi} from "./useSpeechApi";
+import Select from "react-select";
+import {languages} from "./languages";
 
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition
-const mic = new SpeechRecognition()
-
-mic.continuous = true
-mic.interimResults = true
-mic.lang = 'en-US'
 
 function App() {
-  const [isListening, setIsListening] = useState(false)
-  const [note, setNote] = useState(null)
   const [savedNotes, setSavedNotes] = useState([])
+  const [note, setNote, isListening, setIsListening, setDialect] = useSpeechApi('en-US')
 
-  useEffect(() => {
-    handleListen()
-  }, [isListening])
+  const [language, setLanguage] = useState(6)
+  const [dialects, setDialects] = useState([])
+  const [dialectsVisible, setDialectsVisible] = useState(true)
 
-  const handleListen = () => {
-    if (isListening) {
-      mic.start()
-      mic.onend = () => {
-        console.log('continue..')
-        mic.start()
-      }
-    } else {
-      mic.stop()
-      mic.onend = () => {
-        console.log('Stopped Mic on Click')
-      }
-    }
-    mic.onstart = () => {
-      console.log('Mics on')
-    }
+  useEffect(()=>{
+    const list = languages[language];
+    const options =  list.map((option,index) => new Option(option[1], option[0]))
+    setDialects(options)
+  },[language]);
 
-    mic.onresult = event => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0])
-        .map(result => result.transcript)
-        .join('')
-      console.log(transcript)
-      setNote(transcript)
-      mic.onerror = event => {
-        console.log(event.error)
-      }
-    }
-  }
+  useEffect(()=>{
+    setDialectsVisible(dialects.length>0 && dialects[1].length>1)
+  }, [dialects])
 
   const handleSaveNote = () => {
     setSavedNotes([...savedNotes, note])
     setNote('')
   }
+
+  const getLanguages = ()=> {
+    return languages.map((option,index)=> new Option(option[0], index))
+  }
+
 
   return (
     <>
@@ -59,7 +39,13 @@ function App() {
       <div className="container">
         <div className="box">
           <h2>Current Note</h2>
-          {isListening ? <span>🎙️</span> : <span>🛑🎙️</span>}
+          <Select options={getLanguages()} onChange={(option)=>setLanguage(option.value)}
+                  className='react-select-container' classNamePrefix="react-select" />
+          <Select options={dialects} isHidden={!dialectsVisible} onChange={(option)=> setDialect(option.value)}
+                  className='react-select-container' classNamePrefix="react-select" />
+          {isListening
+              ? <span role="img" aria-label="recording">🎙️</span>
+              : <span role="img" aria-label="record">🛑🎙️</span>}
           <button onClick={handleSaveNote} disabled={!note}>
             Save Note
           </button>
