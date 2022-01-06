@@ -10,7 +10,21 @@ export const useSpeechApi = (defaultDialect) => {
     const [isListening, setIsListening] = useState(false)
     const [note, setNote] = useState(null)
     const [dialect, setDialect] = useState(defaultDialect)
+    const [status, setStatus] = useState("start")
 
+    mic.onstart = event => {
+        setStatus('speak_now');
+    }
+
+    mic.onerror = event => {
+        if (event.error === 'no-speech') setStatus('no_speech');
+        if (event.error === 'audio-capture') setStatus('no_microphone');
+        if (event.error === 'not-allowed') setStatus('blocked');
+    }
+
+    mic.onend = event => {
+        setStatus('stop');
+    }
 
     mic.onresult = event => {
         const transcript = Array.from(event.results)
@@ -23,8 +37,8 @@ export const useSpeechApi = (defaultDialect) => {
         }
     }
 
-    useEffect(()=>{
-        mic.lang = dialect
+    useEffect(() => {
+        mic.lang = dialect.value
     }, [dialect])
 
     useEffect(() => {
@@ -36,5 +50,5 @@ export const useSpeechApi = (defaultDialect) => {
     }, [isListening])
 
 
-    return [note, setNote, isListening, setIsListening, setDialect];
+    return [note, setNote, isListening, setIsListening, dialect, setDialect, status];
 }
